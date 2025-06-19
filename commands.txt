@@ -1,0 +1,8 @@
+prefix: /
+- test
+- hello
+- bye
+- ping
+- help
+- info
+- poll
