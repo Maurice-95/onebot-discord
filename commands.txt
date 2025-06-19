@@ -6,3 +6,10 @@ prefix: /
 - help
 - info
 - poll
+- membercount
+- userinfo
+- dice
+- coinflip
+- rps (Rock, Paper, Scissors)
+- quote
+- announce (Admin)
