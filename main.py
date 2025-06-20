@@ -223,5 +223,73 @@ async def announce(ctx, *, message):
             await ctx.send("Announcement channel not found.")
     else:
         await ctx.send("You don't have permission to do that!")
+
+# Clear chat command. Clears chat when using a value of /clear 1 or greater.
+@bot.command()
+async def clear(ctx, amount: int):
+    if ctx.guild is None:
+        return
+    if any(role.name in role2 for role in ctx.author.roles):
+        if amount < 1:
+            await ctx.send("You must delete at least one message.")
+            return
+        deleted = await ctx.channel.purge(limit=amount + 1)
+    else:
+        await ctx.send(f"You don't have permission to do that!")
+
+# Slow mode command.
+@bot.command()
+async def slowmode(ctx, seconds: int):
+    if not ctx.channel.permissions_for(ctx.guild.me).manage_channels:
+        await ctx.send("⛔ I don’t have permission to manage this channel!")
+        return
+    if seconds < 0:
+        await ctx.send("⛔ Slowmode duration must be zero or more seconds.")
+        return
+    if seconds > 21600:  # Discord max slowmode is 6 hours
+        await ctx.send("⛔ Slowmode duration cannot exceed 21600 seconds (6 hours).")
+        return
+    role = discord.utils.get(ctx.guild.roles, name=role2)
+    await ctx.channel.edit(slowmode_delay=seconds)
+    if seconds == 0:
+        await ctx.send("✅ Slowmode has been disabled in this channel.")
+    else:
+        await ctx.send(f"✅ Slowmode set to {seconds} seconds in this channel.")
+        if any(role.name in role2 for role in ctx.author.roles) is None:
+            await ctx.send("You don't have permission to do that!")
+
+# Warn command.
+@bot.command()
+async def warn(ctx, *, reason=None):
+    if ctx.guild is None:
+        return
+    if any(role.name in role2 for role in ctx.author.roles):
+        if ctx.message.mentions:
+            for member in ctx.message.mentions:
+                with open('warnings.txt', 'a') as f:
+                    f.write(f"Warned at {ctx.message.created_at}. Mod: {ctx.author.name} Reason: {reason}\n")
+                await ctx.send(f"{member.mention} has been warned! ⚠️ Please remember to follow the rules. Reason: {reason}")
+        else:
+            await ctx.send("You need to mention a user to warn them.")
+    else:
+        await ctx.send(f"You don't have permission to do that!")
+
+# Warn list command.
+@bot.command()
+async def warnlist(ctx):
+    if ctx.guild is None:
+        return
+    with open('warnings.txt', 'r') as f:
+        warnings = f.readlines()
+    if any(role.name in role2 for role in ctx.author.roles):
+        if warnings:
+            embed = discord.Embed(title="Warning List", description="List of warnings:")
+            for warning in warnings:
+                embed.add_field(name="Warning", value=warning.strip(), inline=False)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("No warnings found.")
+    else:
+        await ctx.send(f"You don't have permission to do that!")
     
 bot.run(token, log_handler=handler, log_level=logging.INFO)

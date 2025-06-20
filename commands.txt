@@ -13,3 +13,7 @@ prefix: /
 - rps (Rock, Paper, Scissors)
 - quote
 - announce (Admin)
+- clear (Admin)
+- slowmode (Admin)
+- warn (Admin)
+- warnlist (Admin)
