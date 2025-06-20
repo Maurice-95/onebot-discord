@@ -8,12 +8,17 @@ prefix: /
 - poll
 - membercount
 - userinfo
+- avatar
+- roles
+- spotify
 - dice
 - coinflip
 - rps (Rock, Paper, Scissors)
 - quote
+- meme
 - announce (Admin)
 - clear (Admin)
 - slowmode (Admin)
 - warn (Admin)
 - warnlist (Admin)
+- prefix (Admin)
