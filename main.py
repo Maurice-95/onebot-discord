@@ -1,10 +1,13 @@
 import discord
 from discord import Intents
 from discord import Streaming
+from discord import Spotify
 from discord.ext import commands
 from discord.utils import get
 import logging
 import asyncio
+import pytz
+from datetime import datetime
 from dotenv import load_dotenv
 import random
 import os
@@ -25,6 +28,8 @@ role2 = "Moderation"
 # Server channels. Edit these to your exact channels.
 channel1 = "「👋🏼」welcome"
 channel2 = "「👨🏼‍💻」github-updates"
+channel3 = "bot-log"
+channel4 = "「💭」suggestions"
 
 # Console message when bot is ready.
 @bot.event
@@ -141,6 +146,12 @@ async def poll(ctx, *, question):
         await ctx.send("Poll is closed. ⏰")
         return
 
+@poll.error
+async def poll_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Please provide a question for the poll.")
+        return
+
 # Member count command.
 @bot.command()
 async def membercount(ctx):
@@ -192,6 +203,26 @@ async def roles(ctx):
     await ctx.send(embed=embed)
     return
 
+# Suggestion command. Sends a suggestion to the suggestions channel with polling.
+@bot.command()
+async def suggest(ctx, *, question):
+    if ctx.guild is None:
+        return
+    channel = discord.utils.get(ctx.guild.text_channels, name=channel4)
+    if channel:
+        embed = discord.Embed(title="Onebot Suggestion", description=question)
+        suggest_message = await channel.send(embed=embed)
+        await suggest_message.add_reaction("👍")
+        await suggest_message.add_reaction("👎")
+        await ctx.send(f"Your suggestion has been sent to {channel.mention}. Thank you! 💡")
+        return
+
+@suggest.error
+async def suggest_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"{ctx.author.mention} Please provide a suggestion.")
+        return    
+
 # Spotify playing command. Shows what the user is currently listening to on Spotify.
 @bot.command()
 async def spotify(ctx, member: discord.Member = None):
@@ -215,6 +246,21 @@ async def spotify(ctx, member: discord.Member = None):
     else:
         await ctx.send(f"{user.mention} is not listening to Spotify right now. 🎧")
         return
+
+# Sends invite link in chat.
+@bot.command()
+async def invite(ctx):
+    if ctx.guild is None:
+        return
+    invite_link = "https://discord.gg/nrnGKy5JZh" # Replace with your bot's invite link
+    embed = discord.Embed(title="Server invite", description=(
+        "Copy the link below to invite users to this server.\n"
+        f"[Click/copy this]({invite_link})."
+        )
+    )
+    embed.set_thumbnail(url=ctx.guild.icon.url)
+    await ctx.send(embed=embed)
+    return
 
 # "Fun" commands.
 
@@ -244,7 +290,7 @@ async def rps(ctx, choice: str):
     choices = ["rock", "paper", "scissors"]
     user_choice = choice.lower()
     if user_choice not in choices:
-        await ctx.send(f"{ctx.author.mention} Please choose rock, paper, or scissors.")
+        await ctx.send("Please choose rock, paper, or scissors.")
         return
 
     bot_choice = random.choice(choices)
@@ -261,8 +307,22 @@ async def rps(ctx, choice: str):
 @rps.error
 async def rps_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"{ctx.author.mention} Please choose rock, paper, or scissors.")
+        await ctx.send("Please choose rock, paper, or scissors.")
         return
+
+# Would you rather command.
+@bot.command(aliases=["wyr"])
+async def wouldyourather(ctx):
+    if ctx.guild is None:
+        return
+    with open('wyr.txt', 'r') as f:
+        questions = f.readlines()
+    question = random.choice(questions).strip()
+    file = discord.File("images/wyr.png", filename="wyr.png")
+    embed = discord.Embed(title="Would You Rather", description=question)
+    embed.set_thumbnail(url="attachment://wyr.png")
+    await ctx.send(embed=embed, file=file)
+    return
 
 #Quote command.
 @bot.command()
@@ -289,6 +349,27 @@ async def meme(ctx):
     embed.set_image(url=memeUrl)
     await ctx.send(embed=embed)
     return
+
+# Guess the number command.
+@bot.command()
+async def guess(ctx, number: int):
+    if ctx.guild is None:
+        return
+    if not 1 <= number <= 10:
+        await ctx.send("Please guess a number between 1 and 10.")
+        return
+    secret_number = random.randint(1, 10)
+    if number is secret_number:
+        await ctx.send(f"Congratulations {ctx.author.mention}! You guessed the number {secret_number}! 🎉")
+    else:
+        await ctx.send(f"The secret number was {secret_number}...")
+        return
+
+@guess.error
+async def guess_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please guess a number between 1 and 10.")
+        return
 
 #Administration commands.
 
@@ -336,13 +417,18 @@ async def slowmode(ctx, seconds: int):
         return
     role = discord.utils.get(ctx.guild.roles, name=role2)
     await ctx.channel.edit(slowmode_delay=seconds)
-    if seconds == 0:
+    if seconds is 0:
         await ctx.send("✅ Slowmode has been disabled in this channel.")
     else:
         await ctx.send(f"✅ Slowmode set to {seconds} seconds in this channel.")
         if any(role.name in role2 for role in ctx.author.roles) is None:
             await ctx.send("You don't have permission to do that!")
             return
+
+@slowmode.error
+async def slowmode_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please provide a duration in seconds for slowmode. 0 to disable.")
 
 # Warn command.
 @bot.command()

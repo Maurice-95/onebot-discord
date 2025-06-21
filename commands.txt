@@ -10,12 +10,16 @@ prefix: /
 - userinfo
 - avatar
 - roles
+- suggest
 - spotify
+- invite
 - dice
 - coinflip
 - rps (Rock, Paper, Scissors)
 - quote
 - meme
+- wouldyourather, wyr (Would You Rather)
+- guess (1 - 10)
 - announce (Admin)
 - clear (Admin)
 - slowmode (Admin)
