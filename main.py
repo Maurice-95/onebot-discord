@@ -371,6 +371,30 @@ async def guess_error(ctx, error):
         await ctx.send("Please guess a number between 1 and 10.")
         return
 
+# Type challenge command.
+@bot.command()
+async def challenge(ctx):
+    if ctx.guild is None:
+        return
+    with open('challenge.txt', 'r') as f:
+        challenges = f.readlines()
+    challenge = random.choice(challenges).strip()
+    embed = discord.Embed(title="Typing Challenge", description=challenge)
+    await ctx.send(embed=embed)
+    await ctx.send("Type the above text as fast as you can! ⏱️")
+    def check (msg):
+        return msg.author == ctx.author and msg.channel == ctx.channel
+    try:
+        msg = await bot.wait_for('message', timeout=10, check=check)
+    except asyncio.TimeoutError:
+        await ctx.send("Time's up! ⏰")
+        return
+    if msg.content.strip().lower() == challenge.lower():
+        await ctx.send(f"GG {ctx.author.mention}! You typed it in {msg.created_at - ctx.message.created_at} seconds! 🎉")
+    else:
+        await ctx.send("Oops! Better luck next time!")
+        return
+
 #Administration commands.
 
 # Announcement command.
@@ -417,7 +441,7 @@ async def slowmode(ctx, seconds: int):
         return
     role = discord.utils.get(ctx.guild.roles, name=role2)
     await ctx.channel.edit(slowmode_delay=seconds)
-    if seconds is 0:
+    if seconds == 0:
         await ctx.send("✅ Slowmode has been disabled in this channel.")
     else:
         await ctx.send(f"✅ Slowmode set to {seconds} seconds in this channel.")

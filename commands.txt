@@ -20,6 +20,7 @@ prefix: /
 - meme
 - wouldyourather, wyr (Would You Rather)
 - guess (1 - 10)
+- challenge
 - announce (Admin)
 - clear (Admin)
 - slowmode (Admin)
